@@ -1,0 +1,48 @@
+
+name: Build ardftsrc-rs for i386
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Install cross compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-i686-linux-gnu
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          repository: phayes/ardftsrc-rs
+          ref: master
+          path: source
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: i686-unknown-linux-gnu
+
+      - name: Build i386 binary
+        working-directory: source
+        env:
+          CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER: i686-linux-gnu-gcc
+          CC_i686_unknown_linux_gnu: i686-linux-gnu-gcc
+        run: |
+          cargo build --locked --release \
+            --target i686-unknown-linux-gnu \
+            -p ardftsrc-rs
+
+      - name: Check binary architecture
+        working-directory: source
+        run: |
+          file target/i686-unknown-linux-gnu/release/ardftsrc-rs
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ardftsrc-rs-i386
+          path: source/target/i686-unknown-linux-gnu/release/ardftsrc-rs
